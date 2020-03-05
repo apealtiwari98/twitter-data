@@ -1,0 +1,4 @@
+EURUSD
+GBPUSD
+JPYUSD
+coronavirus
