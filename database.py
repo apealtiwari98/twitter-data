@@ -23,7 +23,7 @@ class Tweet(Base):
     tweet_possibly_sensitive=Column('tweet_possibly_sensitive', Boolean)
 
 
-engine = create_engine('postgresql://upwork:upwork@coin-market.cuovmdkoy4e4.us-east-1.rds.amazonaws.com:5432/coinmarket')
+engine = create_engine('postgresql://upwork:upwork@coin-market.cuovmdkoy4e4.us-east-1.rds.amazonaws.com:5432/postgres')
 
 #Create Schema into Database
 if __name__ == "__main__":
