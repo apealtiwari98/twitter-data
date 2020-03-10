@@ -4,6 +4,8 @@ import database
 from database import Tweet
 from sqlalchemy.orm import sessionmaker,relationship
 import datetime
+import re
+
 
 #Authentication Details
 APP_KEY = "JyvKTUU98cMCIhhWC0MiMcwmZ"
@@ -11,6 +13,9 @@ APP_SECRET = "ZAgycA8nHsLf0KmGbjCm83Pvhe8vLX4C6dUy517Wfoe8GZJmKl"
 OAUTH_TOKEN ="4218527549-kH6tulBQOtQIHjX8XFqPQZ32f72gBASpgebZYVi"
 OAUTH_TOKEN_SECRET = "b7uD4wld9Lqv2fU59CBNZXJ1kHnbzK7PzE7BHaMPil25g"
 
+#For Apeal
+OAUTH_TOKEN = "900039071300321280-XNl26zmODa9cQ7TLnjj2HclzbKHyAtd"
+OAUTH_TOKEN_SECRET = "qr5Ug6hpyWZOCabagdQRgu3Qx3cYUHIszIaPkdeamJDsj"
 
 twitter = Twython(APP_KEY, APP_SECRET)
 
@@ -90,46 +95,38 @@ def save_to_database(tweet, keyword):
 
 #Get Data One By One For Each Keyword
 keywords = ""
+keywords_array = []
+
+today_date = datetime.date.today()
 
 for keyword in lines:
 	keyword = keyword.replace("\n", "")
 	keyword = keyword.replace(" ","")
 	keywords+=keyword + ","
+	keywords_array.append(keyword)
+	reached_final = False
 	try:
 		print("Getting Data For" +keyword)
 		results = twitter.cursor(twitter.search, q=keyword,return_pages=True)
 		for page in results:
 			for result in page:
-				save_to_database(result, keyword)
+				tweet_created_at = convert(result['created_at']).date()
+				if tweet_created_at == today_date:
+					#print("It's today")
+					save_to_database(result, keyword)
+
+				else:
+					reached_final = True
+					#print("It's not today, Skipping...")
+
+				if reached_final == True:
+					break
+
+			if reached_final:
+				break
 
 	except StopIteration:
 		print("Successfully Got Data For: " +keyword)
 
 	except Exception as e:
 		print(str(e))
-
-
-#For RealTime Listenting To Twitter
-class MyStreamer(TwythonStreamer):
-    def on_success(self, data):
-    	print("Tracking Realtime")
-    	keyword = "realtimetracking"
-    	save_to_database(data,keyword)
-    	thread = threading.Thread(target=save_to_database,args=[data,keyword])
-
-    def on_error(self, status_code, data):
-    	print(status_code)
-
-
-
-#Track Tweets Realtime
-def track_tweets_realtime(APP_KEY,APP_SECRET,OAUTH_TOKEN,OAUTH_TOKEN_SECRET):
-	stream = MyStreamer(APP_KEY, APP_SECRET,OAUTH_TOKEN,OAUTH_TOKEN_SECRET)
-	stream.statuses.filter(track=keywords)
-
-#Start Realtime Tracking
-try:
-	track_tweets_realtime(APP_KEY,APP_SECRET,OAUTH_TOKEN,OAUTH_TOKEN_SECRET)
-
-except Exception as e:
-	print(str(e))
